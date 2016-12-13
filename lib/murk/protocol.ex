@@ -1,4 +1,17 @@
+defmodule Murk.ProtocolError do
+  defexception value: nil, message: nil
+
+  def message(%{value: %{__struct__: struct}, message: nil}) do
+    "Murk.Protocol not implemented for #{struct}"
+  end
+  def message(%{value: value, message: nil}) do
+    "Murk.Protocol not implemented for #{inspect value}"
+  end
+end
+
 defprotocol Murk.Protocol do
+  @fallback_to_any true
+
   def type(data)
   def is_type?(data, type)
   def valid?(data)
@@ -108,4 +121,29 @@ defimpl Murk.Protocol, for: Tuple do
     |> Enum.map(&Murk.Protocol.valid?/1)
     |> Enum.all?
   end
+end
+
+defimpl Murk.Protocol, for: Any do
+  defmacro __deriving__(module, struct, options) do
+    deriving(module, struct, options)
+  end
+
+  def deriving(module, _struct, _options) do
+    quote do
+      defimpl Murk.Protocol, for: unquote(module) do
+        def type(_), do: unquote(module)
+        def is_type?(_, type), do: type == unquote(module)
+        def valid?(data) do
+          data
+          |> Map.keys
+          |> Enum.map(&(unquote(module).murk_validate(data, &1)))
+          |> Enum.all?
+        end
+      end
+    end
+  end
+
+  def type(data), do: raise Murk.ProtocolError, value: data
+  def is_type?(data, _), do: raise Murk.ProtocolError, value: data
+  def valid?(data), do: raise Murk.ProtocolError, value: data
 end

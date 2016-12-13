@@ -6,7 +6,7 @@ Murk is an Elixir data type validation library.
 #### Add murk to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
-    [{:murk, "~> 0.1.0"}]
+    [{:murk, "~> 0.2.0"}]
   end
 ```
 
@@ -24,14 +24,13 @@ Murk.is_type?(:test, :atom)   #=> true
 Murk.is_type?(:test, :string) #=> false
 ```
 
-Murk also allows you to extend your structs to be valid Murk types.
+Murk also allows you to define your structs as valid Murk types.
 
 ```elixir
 defmodule Human do
   import Murk
-  defstruct [:name, :age]
 
-  defmurk Human do
+  defmurk do
     field :name, :string
     field :age,  :integer, required: false
   end

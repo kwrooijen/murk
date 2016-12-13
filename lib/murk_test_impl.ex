@@ -1,8 +1,6 @@
 defmodule MurkHumanTest do
   import Murk
-  defstruct [:name, :age, :friends]
-
-  defmurk MurkHumanTest do
+  defmurk do
     field :name, :string
     field :age, :integer, required: false
     field :friends, [MurkHumanTest]

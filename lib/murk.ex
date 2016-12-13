@@ -5,6 +5,8 @@ defmodule Murk do
 
   defmacro field(name, type, opts \\ []) do
     quote do
+      fields = Module.get_attribute(__MODULE__, :murk_fields) || []
+      Module.put_attribute(__MODULE__, :murk_fields, [unquote(name) | fields])
       def murk_validate(data, unquote(name)) do
         value = data |> Map.get(unquote(name))
         correct_type? = Murk.Protocol.is_type?(value, unquote(type))
@@ -19,21 +21,14 @@ defmodule Murk do
     end
   end
 
-  defmacro defmurk(name, do: block) do
+  defmacro defmurk(do: block) do
     quote do
       unquote(block)
       def murk_validate(_, _), do: true
-
-      defimpl Murk.Protocol, for: unquote(name) do
-        def type(_), do: unquote(name)
-        def is_type?(_, type), do: type == unquote(name)
-        def valid?(data) do
-          data
-          |> Map.keys
-          |> Enum.map(&(unquote(name).murk_validate(data, &1)))
-          |> Enum.all?
-        end
-      end
+      derive = Module.get_attribute(__MODULE__, :derive) || []
+      fields = Module.put_attribute(__MODULE__, :derive, [Murk.Protocol | derive])
+      fields = Module.get_attribute(__MODULE__, :murk_fields)
+      defstruct(fields)
     end
   end
 end
