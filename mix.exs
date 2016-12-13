@@ -7,6 +7,8 @@ defmodule Murk.Mixfile do
      elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
+     description: description(),
+     package: package(),
      deps: deps()]
   end
 
@@ -16,6 +18,12 @@ defmodule Murk.Mixfile do
 
   defp deps do
     []
+  end
+
+  defp description do
+    """
+    Murk is an Elixir data type validation library.
+    """
   end
 
   defp package do
