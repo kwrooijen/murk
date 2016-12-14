@@ -6,7 +6,7 @@ Murk is an Elixir data type validation library.
 #### Add murk to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
-    [{:murk, "~> 0.2.0"}]
+    [{:murk, "~> 0.3.0"}]
   end
 ```
 
