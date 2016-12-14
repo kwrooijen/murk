@@ -71,4 +71,20 @@ defmodule MurkTest do
     assert Murk.valid?(%MurkHumanTest{name: "human", friends: [], age: 12})
     refute Murk.valid?(%MurkHumanTest{name: "human", friends: [], age: "12"})
   end
+
+  test "human gender two options" do
+   assert Murk.valid?(%MurkHumanTest{name: "human", friends: [], gender: "female"})
+   assert Murk.valid?(%MurkHumanTest{name: "human", friends: [], gender: "male"})
+   refute Murk.valid?(%MurkHumanTest{name: "human", friends: [], gender: "murk"})
+   assert Murk.valid?(%MurkHumanTest{name: "human", friends: []})
+  end
+
+  test "new function" do
+    {result1, _} = MurkHumanTest.new
+    {result2, _} = MurkHumanTest.new [name: "human"]
+    {result3, _} = MurkHumanTest.new [name: "human", friends: []]
+    assert result1 == :error
+    assert result2 == :error
+    assert result3 == :ok
+  end
 end

@@ -9,6 +9,15 @@ defmodule Murk.ProtocolError do
   end
 end
 
+defmodule Murk.FieldError do
+  defexception value: nil, message: nil
+
+  def message(%{value: value, message: nil}) do
+    "Invalid fields for #{value.struct}: #{value}"
+  end
+end
+
+
 defprotocol Murk.Protocol do
   @fallback_to_any true
 
@@ -136,7 +145,7 @@ defimpl Murk.Protocol, for: Any do
         def valid?(data) do
           data
           |> Map.keys
-          |> Enum.map(&(unquote(module).murk_validate(data, &1)))
+          |> Enum.map(&(unquote(module).murk_valid_field?(data, &1)))
           |> Enum.all?
         end
       end
