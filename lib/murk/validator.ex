@@ -12,6 +12,11 @@ defmodule Murk.Validator do
     {data, errors ++ new_errors}
   end
 
+  def validate_opts(opts) do
+    opts
+    |> opts_ensure_required
+  end
+
   defp check_available({_, [_|_]} = acc, _, _), do: acc
   defp check_available({nil, errors}, name, required)
   when required in [nil, true] do
@@ -67,4 +72,12 @@ defmodule Murk.Validator do
     end
   end
   defp maybe_convert({data, value}, _, _, _, _), do: {data, value}
+
+  defp opts_ensure_required(opts) do
+    if opts[:required] == nil do
+      [{:required, true} | opts]
+    else
+      opts
+    end
+  end
 end

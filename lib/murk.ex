@@ -16,12 +16,24 @@ defmodule Murk do
     end
   end
 
+  def all_signatures do
+    :code.all_loaded
+    |> Enum.map(&(elem(&1, 0)))
+    |> Enum.filter(&Murk.is_murk_module?/1)
+    |> Enum.map(&({&1, &1.murk_type_signature}))
+  end
+
+  def is_murk_module?(module) do
+    module.module_info[:exports]
+    |> Enum.member?({:murk_type_signature, 0})
+  end
+
   defmacro field(name, type, opts \\ []) do
-    quote do
-      new_field = {unquote(name), unquote(type), unquote(opts)}
+    quote bind_quoted: [name: name, type: type, opts: opts] do
+      new_field = {name, type, opts |> Murk.Validator.validate_opts}
       keys = Module.get_attribute(__MODULE__, :murk_keys) || []
       fields = Module.get_attribute(__MODULE__, :murk_fields) || []
-      Module.put_attribute(__MODULE__, :murk_keys, [ unquote(name) | keys ])
+      Module.put_attribute(__MODULE__, :murk_keys, [ name | keys ])
       Module.put_attribute(__MODULE__, :murk_fields, [ new_field | fields ])
     end
   end
@@ -48,7 +60,7 @@ defmodule Murk do
     end
   end
 
-  def add_validate_fields() do
+  def add_validate_fields do
     quote do
       def murk_validate_fields(data) when is_list(data) do
         data |> Enum.into(%{}) |> murk_validate_fields
@@ -67,6 +79,14 @@ defmodule Murk do
     end
   end
 
+  def add_type_signature do
+    quote do
+      def murk_type_signature do
+        @murk_fields
+      end
+    end
+  end
+
   defmacro defmurk(do: block) do
     quote do
       unquote(block)
@@ -74,6 +94,7 @@ defmodule Murk do
       derive = Module.get_attribute(__MODULE__, :derive) || []
       Module.put_attribute(__MODULE__, :derive, [Murk.Protocol | derive])
       unquote(add_validate_fields())
+      unquote(add_type_signature())
       defstruct(keys)
     end
   end
