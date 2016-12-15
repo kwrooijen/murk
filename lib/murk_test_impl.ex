@@ -1,5 +1,5 @@
 defmodule MurkHumanTest do
-  import Murk
+  use Murk
   defmurk do
     field :name, :string
     field :age, :integer, required: false

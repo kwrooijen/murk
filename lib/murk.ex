@@ -9,42 +9,53 @@ defmodule Murk do
     Enum.member?(list, value)
   end
 
+  defmacro __using__(_) do
+    quote do
+      import Murk
+      unquote(Murk.new_functions())
+    end
+  end
+
   defmacro field(name, type, opts \\ []) do
     quote do
+      new_field = {unquote(name), unquote(type), unquote(opts)}
+      keys = Module.get_attribute(__MODULE__, :murk_keys) || []
       fields = Module.get_attribute(__MODULE__, :murk_fields) || []
-      Module.put_attribute(__MODULE__, :murk_fields, [unquote(name) | fields])
-      def murk_valid_field?(data, unquote(name)) do
-        value = data |> Map.get(unquote(name))
-        correct_type? = Murk.Protocol.is_type?(value, unquote(type))
-        valid? = Murk.Protocol.valid?(value)
-        required? = unquote(opts)[:required] != false
-        is_in? = Murk.is_in?(value, unquote(opts)[:in], required?)
-        if required? do
-          correct_type? && is_in? && valid?
-        else
-          (value == nil || correct_type?) &&  is_in? && valid?
-        end
-      end
+      Module.put_attribute(__MODULE__, :murk_keys, [ unquote(name) | keys ])
+      Module.put_attribute(__MODULE__, :murk_fields, [ new_field | fields ])
     end
   end
 
   def new_functions do
     quote do
       def new!(params \\ []) do
-        struct = struct(__MODULE__, params)
-        if Murk.valid?(struct) do
-          struct
-        else
-          raise Murk.FieldError, value: struct
+        data = struct(__MODULE__, params)
+        case __MODULE__.murk_validate_fields(data) do
+          {:ok, result} ->
+            result
+          {:error, reasons} ->
+            raise Murk.FieldError, value: reasons
         end
       end
 
       def new(params \\ []) do
-        struct = struct(__MODULE__, params)
-        if Murk.valid?(struct) do
-          {:ok, struct}
-        else
-          {:error, :invalid_fields}
+        data = struct(__MODULE__, params)
+        __MODULE__.murk_validate_fields(data)
+      end
+    end
+  end
+
+  def add_validate_fields() do
+    quote do
+      def murk_validate_fields(data) do
+        acc = {data, []}
+        result = @murk_fields
+        |> Enum.reduce({data, []}, &Murk.Validator.validate_field/2)
+        case result do
+          {data, []} ->
+            {:ok, data}
+          {_data, errors} ->
+            {:error, errors}
         end
       end
     end
@@ -52,13 +63,12 @@ defmodule Murk do
 
   defmacro defmurk(do: block) do
     quote do
-      unquote(Murk.new_functions)
       unquote(block)
-      def murk_valid_field?(_, _), do: true
+      keys = Module.get_attribute(__MODULE__, :murk_keys) || []
       derive = Module.get_attribute(__MODULE__, :derive) || []
-      fields = Module.put_attribute(__MODULE__, :derive, [Murk.Protocol | derive])
-      fields = Module.get_attribute(__MODULE__, :murk_fields)
-      defstruct(fields)
+      Module.put_attribute(__MODULE__, :derive, [Murk.Protocol | derive])
+      unquote(add_validate_fields())
+      defstruct(keys)
     end
   end
 end
