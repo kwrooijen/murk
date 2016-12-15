@@ -5,5 +5,6 @@ defmodule MurkHumanTest do
     field :age, :integer, required: false
     field :friends, [MurkHumanTest]
     field :gender, :string, in: ["male", "female"], required: false
+    field :work, :atom, convertable: true, in: [:programmer, :artist], required: false
   end
 end

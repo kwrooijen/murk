@@ -87,4 +87,19 @@ defmodule MurkTest do
     assert result2 == :error
     assert result3 == :ok
   end
+
+  test "convert string field to atom field" do
+    map = %{:name => "foo", :friends => [], "work" => :programmer}
+    {:ok, data} = MurkHumanTest.new(map)
+    assert data.work == :programmer
+  end
+
+  test "convert string value to atom field" do
+    map = %{:name => "foo", :friends => [], "work" => "programmer"}
+    map2 = %{:name => "foo", :friends => [], :work => "programmer"}
+    {:ok, data} = MurkHumanTest.new(map)
+    {:ok, data2} = MurkHumanTest.new(map2)
+    assert data.work == :programmer
+    assert data2.work == :programmer
+  end
 end

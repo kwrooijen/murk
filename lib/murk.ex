@@ -28,9 +28,8 @@ defmodule Murk do
 
   def new_functions do
     quote do
-      def new!(params \\ []) do
-        data = struct(__MODULE__, params)
-        case __MODULE__.murk_validate_fields(data) do
+      def new!(params \\ %{}) do
+        case new(params) do
           {:ok, result} ->
             result
           {:error, reasons} ->
@@ -38,15 +37,22 @@ defmodule Murk do
         end
       end
 
-      def new(params \\ []) do
-        data = struct(__MODULE__, params)
-        __MODULE__.murk_validate_fields(data)
+      def new(params \\ %{}) do
+        case __MODULE__.murk_validate_fields(params) do
+          {:ok, data} ->
+            {:ok, struct(__MODULE__, data)}
+          {:error, errors} ->
+            {:error, errors}
+        end
       end
     end
   end
 
   def add_validate_fields() do
     quote do
+      def murk_validate_fields(data) when is_list(data) do
+        data |> Enum.into(%{}) |> murk_validate_fields
+      end
       def murk_validate_fields(data) do
         acc = {data, []}
         result = @murk_fields
