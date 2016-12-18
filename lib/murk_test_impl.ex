@@ -8,3 +8,7 @@ defmodule MurkHumanTest do
     field :work, :atom, convertable: true, in: [:programmer, :artist], required: false
   end
 end
+
+defmodule MurkHumanTestCopy do
+  defstruct [:name, :age, :friends, :gender, :work]
+end

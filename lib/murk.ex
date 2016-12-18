@@ -66,6 +66,7 @@ defmodule Murk do
         data |> Enum.into(%{}) |> murk_validate_fields
       end
       def murk_validate_fields(data) do
+        data = data |> Map.delete(:__struct__)
         acc = {data, []}
         result = @murk_fields
         |> Enum.reduce({data, []}, &Murk.Validator.validate_field/2)
