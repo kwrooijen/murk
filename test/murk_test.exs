@@ -102,4 +102,12 @@ defmodule MurkTest do
     assert data.work == :programmer
     assert data2.work == :programmer
   end
+
+  test "convert other struct to murk" do
+    copy = %MurkHumanTestCopy{name: "test", friends: []}
+    {ok, result} = MurkHumanTest.new(copy)
+    assert ok == :ok
+    assert result.name == "test"
+    assert result.friends == []
+  end
 end
