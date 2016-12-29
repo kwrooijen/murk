@@ -4,9 +4,9 @@ defmodule Murk.Validator do
   def validate_field({name, type, opts}, {data, errors}) do
     value = Map.get(data, name)
     {data, value} = {data, value}
-    |> maybe_convert_map(type, name)
     |> from_string_field(name)
     |> maybe_convert(type, name, opts[:in], opts[:convertable])
+    |> maybe_convert_map(type, name)
 
     {_, new_errors} = {value, []}
     |> check_available(name, opts[:required])

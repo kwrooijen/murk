@@ -112,8 +112,11 @@ defmodule MurkTest do
   end
 
   test "convert nested field type from map" do
-    human = %{name: "test", friends: [], armor: %{name: "Cloth", type: :light}}
+    human = %{"name" => "test", "friends" => [], "armor" => %{"name" => "Cloth", "type" => :light}}
+    human2 = %{name: "test", friends: [], armor: %{name: "Cloth", type: :light}}
     {_, human} = MurkHumanTest.new(human)
+    {_, human2} = MurkHumanTest.new(human2)
     assert (human |> Map.get(:armor)) == %MurkArmorTest{name: "Cloth", type: :light}
+    assert (human2 |> Map.get(:armor)) == %MurkArmorTest{name: "Cloth", type: :light}
   end
 end
