@@ -6,6 +6,15 @@ defmodule MurkHumanTest do
     field :friends, [MurkHumanTest]
     field :gender, :string, in: ["male", "female"], required: false
     field :work, :atom, convertable: true, in: [:programmer, :artist], required: false
+    field :armor, MurkArmorTest, required: false
+  end
+end
+
+defmodule MurkArmorTest do
+  use Murk
+  defmurk do
+    field :name, :string
+    field :type, :atom, in: [:light, :medium, :heavy]
   end
 end
 

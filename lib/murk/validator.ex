@@ -1,7 +1,10 @@
 defmodule Murk.Validator do
+  @regular_types [:string, :binary, :integer, :float, :pid, :function, :reference, :port, :atom, :boolean]
+
   def validate_field({name, type, opts}, {data, errors}) do
     value = Map.get(data, name)
     {data, value} = {data, value}
+    |> maybe_convert_map(type, name)
     |> from_string_field(name)
     |> maybe_convert(type, name, opts[:in], opts[:convertable])
 
@@ -72,6 +75,22 @@ defmodule Murk.Validator do
     end
   end
   defp maybe_convert({data, value}, _, _, _, _), do: {data, value}
+
+  defp maybe_convert_map({data, value}, type, name)
+  when is_map(value) and
+  not is_map(type) and
+  not type in @regular_types do
+    case type.new(value) do
+      {:ok, value} ->
+        data = data |> Map.put(name, value)
+        {data, value}
+      {:error, _reason} ->
+        {data, value}
+    end
+  end
+  defp maybe_convert_map({data, value}, _type, _name) do
+    {data, value}
+  end
 
   defp opts_ensure_required(opts) do
     if opts[:required] == nil do
