@@ -116,7 +116,30 @@ defmodule MurkTest do
     human2 = %{name: "test", friends: [], armor: %{name: "Cloth", type: :light}}
     {_, human} = MurkHumanTest.new(human)
     {_, human2} = MurkHumanTest.new(human2)
-    assert (human |> Map.get(:armor)) == %MurkArmorTest{name: "Cloth", type: :light}
-    assert (human2 |> Map.get(:armor)) == %MurkArmorTest{name: "Cloth", type: :light}
+    assert (human |> Map.get(:armor)) == %MurkArmorTest{name: "Cloth", type: :light, weight: 0}
+    assert (human2 |> Map.get(:armor)) == %MurkArmorTest{name: "Cloth", type: :light, weight: 0}
+  end
+
+  test "convert nested list type from map" do
+    human = %{"name" => "test", "friends" => [], "armor" => %{"name" => "Cloth", "type" => :light}}
+    human2 = %{name: "test", friends: [human], armor: %{name: "Cloth", type: :light}}
+    {ok, _human} = MurkHumanTest.new(human2)
+    assert ok == :ok
+  end
+
+  test "armor weight should default to 0" do
+    {_ok, armor} = MurkArmorTest.new(name: "Cloth", type: :light)
+    {_ok, armor2} = MurkArmorTest.new(name: "Cloth", type: :light, weight: 10)
+    assert armor.weight == 0
+    assert armor2.weight == 10
+  end
+
+  test "max friends in list is 3" do
+    human1 = %MurkHumanTest{name: "human2", friends: []}
+    human2 = %MurkHumanTest{name: "human", friends: [human1, human1, human1]}
+    human3 = %MurkHumanTest{name: "human", friends: [human1, human1, human1, human1]}
+    assert Murk.valid?(human1)
+    assert Murk.valid?(human2)
+    refute Murk.valid?(human3)
   end
 end

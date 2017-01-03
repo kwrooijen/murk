@@ -5,10 +5,13 @@ defmodule Murk.Validator do
     value = Map.get(data, name)
     {data, value} = {data, value}
     |> from_string_field(name)
+    |> maybe_default(name, opts[:default])
     |> maybe_convert(type, name, opts[:in], opts[:convertable])
     |> maybe_convert_map(type, name)
+    |> maybe_convert_list(type, name)
 
     {_, new_errors} = {value, []}
+    |> check_max(name, opts[:max])
     |> check_available(name, opts[:required])
     |> check_type(name, type, opts[:required])
     |> check_in(name, opts[:in], opts[:required])
@@ -19,6 +22,12 @@ defmodule Murk.Validator do
     opts
     |> opts_ensure_required
   end
+
+  defp check_max({_, [_|_]} = acc, _, _), do: acc
+  defp check_max({value, errors}, name, max) when length(value) > max do
+    {value, [ {name, "Field length exceeds #{max} items"} | errors ]}
+  end
+  defp check_max(acc, _, _), do: acc
 
   defp check_available({_, [_|_]} = acc, _, _), do: acc
   defp check_available({nil, errors}, name, required)
@@ -64,6 +73,12 @@ defmodule Murk.Validator do
   end
   defp from_string_field({data, value}, _name), do: {data, value}
 
+  defp maybe_default({data, nil}, name, default) when default != nil do
+    data = data |> Map.put(name, default)
+    {data, default}
+  end
+  defp maybe_default({data, value}, _name, _default), do: {data, value}
+
   defp maybe_convert({data, value}, :atom, name, [_|_], true)
   when is_binary(value) do
     try do
@@ -89,6 +104,22 @@ defmodule Murk.Validator do
     end
   end
   defp maybe_convert_map({data, value}, _type, _name) do
+    {data, value}
+  end
+
+  defp maybe_convert_list({data, []}, _type, _name), do: {data, []}
+  defp maybe_convert_list({data, [_|_] = values}, [type], name)
+  when not type in @regular_types do
+    try do
+      values = values |> Enum.map(&type.new!/1)
+      data = data |> Map.put(name, values)
+      {data, values}
+    rescue
+      _ in _ ->
+        {data, values}
+    end
+  end
+  defp maybe_convert_list({data, value}, _type, _name) do
     {data, value}
   end
 
