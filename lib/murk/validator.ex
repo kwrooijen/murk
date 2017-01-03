@@ -93,7 +93,7 @@ defmodule Murk.Validator do
 
   defp maybe_convert_map({data, value}, type, name)
   when is_map(value) and
-  not is_map(type) and
+  is_atom(type) and
   not type in @regular_types do
     case type.new(value) do
       {:ok, value} ->
