@@ -86,7 +86,7 @@ defmodule Murk.Validator do
       data = data |> Map.put(name, value)
       {data, value}
     rescue
-      _ in RuntimeError -> {data, value}
+      _ -> {data, value}
     end
   end
   defp maybe_convert({data, value}, _, _, _, _), do: {data, value}
@@ -115,7 +115,7 @@ defmodule Murk.Validator do
       data = data |> Map.put(name, values)
       {data, values}
     rescue
-      _ in _ ->
+      _ ->
         {data, values}
     end
   end
