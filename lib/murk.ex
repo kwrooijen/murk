@@ -99,4 +99,15 @@ defmodule Murk do
       defstruct(keys)
     end
   end
+
+  defmacro extendmurk(do: block) do
+    quote do
+      unquote(block)
+      keys = Module.get_attribute(__MODULE__, :murk_keys) || []
+      derive = Module.get_attribute(__MODULE__, :derive) || []
+      Module.put_attribute(__MODULE__, :derive, [Murk.Protocol | derive])
+      unquote(add_validate_fields())
+      unquote(add_type_signature())
+    end
+  end
 end
