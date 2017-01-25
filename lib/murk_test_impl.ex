@@ -22,3 +22,10 @@ end
 defmodule MurkHumanTestCopy do
   defstruct [:name, :age, :friends, :gender, :work]
 end
+
+defmodule MurkAtomInTest do
+  use Murk
+  defmurk do
+    field :something, [:atom], convertable: true, in: [:foo, :bar]
+  end
+end

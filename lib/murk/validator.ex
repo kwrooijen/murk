@@ -57,6 +57,15 @@ defmodule Murk.Validator do
   defp check_in({value, errors}, _name, _inlist = nil, _required) do
     {value, errors}
   end
+  defp check_in({value, errors}, name, in_list, _required) when is_list(value) do
+    all_member? = value
+    |> Enum.all?(&(Enum.member?(in_list, &1)))
+    if all_member? do
+      {value, errors}
+    else
+      {value, [{name, "Not a member"} | errors]}
+    end
+  end
   defp check_in({value, errors}, name, in_list, _required) do
     if Enum.member?(in_list, value) do
       {value, errors}
@@ -79,14 +88,26 @@ defmodule Murk.Validator do
   end
   defp maybe_default({data, value}, _name, _default), do: {data, value}
 
+  defp maybe_convert({data, value}, [:atom], name, [_|_], true) do
+    new_value = value
+    |> Enum.map(&convert_string_to_atom/1)
+    |> Enum.filter(&is_ok/1)
+    |> Enum.map(fn({_, value}) -> value end)
+    if Enum.count(new_value) == Enum.count(value) do
+      data = data |> Map.put(name, new_value)
+      {data, new_value}
+    else
+      {data, value}
+    end
+  end
   defp maybe_convert({data, value}, :atom, name, [_|_], true)
   when is_binary(value) do
-    try do
-      value = String.to_existing_atom(value)
-      data = data |> Map.put(name, value)
-      {data, value}
-    rescue
-      _ -> {data, value}
+    case convert_string_to_atom(value) do
+      {:ok, value} ->
+        data = data |> Map.put(name, value)
+        {data, value}
+      {:error, :invalid} ->
+        {data, value}
     end
   end
   defp maybe_convert({data, value}, _, _, _, _), do: {data, value}
@@ -130,4 +151,17 @@ defmodule Murk.Validator do
       opts
     end
   end
+
+  defp convert_string_to_atom(atom) when is_atom(atom), do: {:ok, atom}
+  defp convert_string_to_atom(string) do
+    try do
+      value = String.to_existing_atom(string)
+      {:ok, value}
+    rescue
+      _ -> {:error, :invalid}
+    end
+  end
+
+  defp is_ok({:ok, _}), do: true
+  defp is_ok({_, _}), do: false
 end

@@ -142,4 +142,18 @@ defmodule MurkTest do
     assert Murk.valid?(human2)
     refute Murk.valid?(human3)
   end
+
+  test "create atom list" do
+    {result1, _} = MurkAtomInTest.new(something: [:foo])
+    {result2, _} = MurkAtomInTest.new(something: [:bar])
+    {result3, _} = MurkAtomInTest.new(something: [:zzz])
+    assert :ok == result1
+    assert :ok == result2
+    assert :error == result3
+  end
+
+  test "convert atom list" do
+    {result, _} = MurkAtomInTest.new(something: ["foo", "bar"])
+    assert :ok == result
+  end
 end
